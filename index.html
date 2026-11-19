@@ -89,6 +89,11 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
 #meta{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:12px;border-top:2px dashed #b9a477;font-size:14px;color:#5c4a33}
 #reveal:not([hidden])~#meta{margin-top:12px}
 #badges{display:inline-flex;gap:6px}
+#order svg{display:none}
+#order[data-order=new] .o-new,#order[data-order=old] .o-old,#order[data-order=shuf] .o-shuf{display:block}
+#order[data-order=shuf]{background:var(--p5);box-shadow:3px 3px 0 #000}
+#date{font:13px var(--typer,monospace);color:#5c4a33;white-space:nowrap}
+.item .d{display:block;margin-top:4px;font:12px var(--typer,monospace);color:#7a6548}
 .badge{font:12px/1 var(--punch);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);background:#000;padding:5px 9px;transform:skewX(-10deg)}
 #orig{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font:15px/1 var(--type);color:#8c1018;text-decoration:underline;text-underline-offset:3px}
 #orig::after{content:'\2197';margin-left:5px;text-decoration:none;display:inline-block}
@@ -155,7 +160,7 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
   </div>
   <div class="chips">
     <button id="favonly" class="chip" aria-pressed="false" aria-label="Favorites only"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg><span>Faves</span></button>
-    <button id="shuffle" class="chip" aria-pressed="false" aria-label="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span>Shuffle</span></button>
+    <button id="order" class="chip" data-order="new" aria-label="Order: newest first, tap to change"><svg class="o-new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg><svg class="o-old" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V4M6 10l6-6 6 6"/></svg><svg class="o-shuf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span id="orderlbl">Newest</span></button>
     <button id="listmode" class="chip" aria-pressed="false" aria-label="List view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>List</span></button>
   </div>
   <div class="types" role="group" aria-label="Joke type">
@@ -173,6 +178,7 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
     <button id="reveal" class="primary">Tap for the punchline</button>
     <div id="meta" hidden>
       <span id="badges"></span>
+      <span id="date"></span>
       <a id="orig" target="_blank" rel="noopener">Open original</a>
       <button id="fav" aria-pressed="false" aria-label="Favorite">&#9734;</button>
     </div>
@@ -221,7 +227,18 @@ async function decrypt(keyStr,buf){
   return JSON.parse(text);
 }
 
-var jokes=[], view=[], order=[], pos=0, shuffled=false, favOnly=false, shown=false, favs={}, listMode=false, LISTK='pp.list';
+// Order: 'new' (newest first, default), 'old', 'shuf'. Tapping the Order chip cycles.
+var sortMode='new', ORDK='pp.order', ORDNEXT={new:'old',old:'shuf',shuf:'new'},
+    ORDLBL={new:'Newest',old:'Oldest',shuf:'Shuffle'},
+    ORDARIA={new:'Order: newest first, tap to change',old:'Order: oldest first, tap to change',shuf:'Order: shuffled, tap to change'};
+function setOrder(m,keep){
+  sortMode=m; store(ORDK,m);
+  var b=$('order'); b.setAttribute('data-order',m); b.setAttribute('aria-label',ORDARIA[m]); $('orderlbl').textContent=ORDLBL[m];
+  rebuild(keep);
+}
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(s){var p=s.split('-');return p.length===3?MON[+p[1]-1]+' '+(+p[2])+', '+p[0]:s}
+var jokes=[], view=[], order=[], pos=0, favOnly=false, shown=false, favs={}, listMode=false, LISTK='pp.list';
 // Joke type: 'q' when the setup asks a question, 's' (one-liner) otherwise.
 var jtype='all', TYPEK='pp.type';
 function typeOf(j){return /\?/.test(j.setup)?'q':'s'}
@@ -246,8 +263,13 @@ function rebuild(keepCurrent){
     if(jtype!=='all'&&j.type!==jtype) return false;
     return !q||(j.setup+' '+j.punchline).toLowerCase().indexOf(q)>=0;
   });
+  // Newest/oldest by first-posted time; ties keep the original order.
+  if(sortMode!=='shuf'){
+    var dir=sortMode==='new'?-1:1;
+    view.sort(function(a,b){return ((a.ts||0)-(b.ts||0))*dir||a.idx-b.idx});
+  }
   order=view.map(function(_,i){return i});
-  if(shuffled) shuf(order);
+  if(sortMode==='shuf') shuf(order);
   pos=0;
   if(cur){var vi=view.indexOf(cur);if(vi>=0)pos=order.indexOf(vi)}
   shown=false; render();
@@ -278,6 +300,7 @@ function renderList(){
     var s=document.createElement('p'); s.className='s'; s.textContent=j.setup;
     var q=document.createElement('p'); q.className='p'; q.textContent=j.punchline;
     t.appendChild(s); t.appendChild(q);
+    if(j.date){var dd=document.createElement('span'); dd.className='d'; dd.textContent=fmtDate(j.date); t.appendChild(dd)}
     var st=document.createElement('button'); st.className='star'; st.setAttribute('aria-label','Favorite');
     st.setAttribute('aria-pressed',favs[j.id]?'true':'false'); st.innerHTML=favs[j.id]?'&#9733;':'&#9734;';
     st.onclick=function(ev){ev.stopPropagation();
@@ -310,6 +333,7 @@ function render(){
   var j=view[order[pos]];
   $('setup').textContent=j.setup; $('punch').textContent=j.punchline; $('punch').hidden=!shown;
   $('counter').textContent=(pos+1)+' of '+view.length+(view.length!==jokes.length?' (of '+jokes.length+')':'');
+  $('date').textContent=j.date?fmtDate(j.date):'';
   var b=$('badges'); b.textContent='';
   var seen={};
   j.occurrences.forEach(function(o){if(seen[o.source])return;seen[o.source]=1;var s=document.createElement('span');s.className='badge';s.textContent=o.source;b.appendChild(s);b.appendChild(document.createTextNode(' '))});
@@ -328,7 +352,8 @@ function wire(){
   $('next').onclick=function(){go(1)}; $('prev').onclick=function(){go(-1)};
   $('reveal').onclick=reveal;
   $('empty').querySelector('.clearbtn').onclick=clearFilters;
-  $('shuffle').onclick=function(){shuffled=!shuffled;$('shuffle').setAttribute('aria-pressed',shuffled);rebuild(true)};
+  // A new order starts from its first joke (newest, oldest, or a fresh shuffle).
+  $('order').onclick=function(){setOrder(ORDNEXT[sortMode],false); if(listMode) $('list').scrollTop=0};
   $('favonly').onclick=function(){favOnly=!favOnly;$('favonly').setAttribute('aria-pressed',favOnly);rebuild(false)};
   ['t-all','t-q','t-s'].forEach(function(id){$(id).onclick=function(){setType($(id).getAttribute('data-type'))}});
   $('search').oninput=function(){rebuild(false)};
@@ -363,7 +388,11 @@ async function boot(){
   try{ data=await decrypt(found.k,buf) }
   catch(e){ if(!found.fromHash) dropKey(); needLink(); return }
   saveKey(found.k); holdKey(found.k);
-  jokes=data.map(function(j){j.id=hid(j);j.type=typeOf(j);return j});
+  jokes=data.map(function(j,i){j.id=hid(j);j.type=typeOf(j);j.idx=i;
+    if(j.ts==null&&j.date){var t=Date.parse(j.date+'T00:00:00Z');j.ts=isNaN(t)?0:t/1000}
+    return j});
+  var so=load(ORDK); if(so==='old'||so==='shuf'||so==='new'){sortMode=so}
+  $('order').setAttribute('data-order',sortMode); $('order').setAttribute('aria-label',ORDARIA[sortMode]); $('orderlbl').textContent=ORDLBL[sortMode];
   loadFavs(); wire(); typeCounts();
   $('app').hidden=false;
   var st=load(TYPEK); if(st==='q'||st==='s') setType(st); else rebuild(false);
