@@ -89,10 +89,17 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
 #meta{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:12px;border-top:2px dashed #b9a477;font-size:14px;color:#5c4a33}
 #reveal:not([hidden])~#meta{margin-top:12px}
 #badges{display:inline-flex;gap:6px}
+#order{position:relative}
 #order svg{display:none}
+#order svg.caret{display:block;width:12px;height:12px;margin-left:-3px;opacity:.85}
+/* the native picker covers the whole chip, invisible: one tap opens the phone's own chooser */
+#ordersel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0;-webkit-appearance:none;appearance:none;transform:none}
 #order[data-order=new] .o-new,#order[data-order=old] .o-old,#order[data-order=shuf] .o-shuf{display:block}
 #order[data-order=shuf]{background:var(--p5);box-shadow:3px 3px 0 #000}
 #date{font:13px var(--typer,monospace);color:#5c4a33;white-space:nowrap}
+#orig{white-space:nowrap}
+#fav{flex:none}
+@media (max-width:400px){#meta{gap:7px} #date{font-size:12px} #orig{font-size:13px}}
 .item .d{display:block;margin-top:4px;font:12px var(--typer,monospace);color:#7a6548}
 .badge{font:12px/1 var(--punch);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);background:#000;padding:5px 9px;transform:skewX(-10deg)}
 #orig{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font:15px/1 var(--type);color:#8c1018;text-decoration:underline;text-underline-offset:3px}
@@ -160,7 +167,7 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
   </div>
   <div class="chips">
     <button id="favonly" class="chip" aria-pressed="false" aria-label="Favorites only"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg><span>Faves</span></button>
-    <button id="order" class="chip" data-order="new" aria-label="Order: newest first, tap to change"><svg class="o-new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg><svg class="o-old" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V4M6 10l6-6 6 6"/></svg><svg class="o-shuf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span id="orderlbl">Newest</span></button>
+    <label id="order" class="chip" data-order="new"><svg class="o-new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg><svg class="o-old" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V4M6 10l6-6 6 6"/></svg><svg class="o-shuf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span id="orderlbl">Newest</span><svg class="caret" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12l-6 7z"/></svg><select id="ordersel" aria-label="Sort order"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="shuf">Shuffle</option></select></label>
     <button id="listmode" class="chip" aria-pressed="false" aria-label="List view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>List</span></button>
   </div>
   <div class="types" role="group" aria-label="Joke type">
@@ -230,10 +237,10 @@ async function decrypt(keyStr,buf){
 // Order: 'new' (newest first, default), 'old', 'shuf'. Tapping the Order chip cycles.
 var sortMode='new', ORDK='pp.order', ORDNEXT={new:'old',old:'shuf',shuf:'new'},
     ORDLBL={new:'Newest',old:'Oldest',shuf:'Shuffle'},
-    ORDARIA={new:'Order: newest first, tap to change',old:'Order: oldest first, tap to change',shuf:'Order: shuffled, tap to change'};
+    ORDARIA={new:'Sort order: newest first',old:'Sort order: oldest first',shuf:'Sort order: shuffled'};
 function setOrder(m,keep){
   sortMode=m; store(ORDK,m);
-  var b=$('order'); b.setAttribute('data-order',m); b.setAttribute('aria-label',ORDARIA[m]); $('orderlbl').textContent=ORDLBL[m];
+  var b=$('order'); b.setAttribute('data-order',m); $('ordersel').setAttribute('aria-label',ORDARIA[m]); $('orderlbl').textContent=ORDLBL[m]; $('ordersel').value=m;
   rebuild(keep);
 }
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -352,8 +359,8 @@ function wire(){
   $('next').onclick=function(){go(1)}; $('prev').onclick=function(){go(-1)};
   $('reveal').onclick=reveal;
   $('empty').querySelector('.clearbtn').onclick=clearFilters;
-  // A new order starts from its first joke (newest, oldest, or a fresh shuffle).
-  $('order').onclick=function(){setOrder(ORDNEXT[sortMode],false); if(listMode) $('list').scrollTop=0};
+  // Pick an order directly; a new order starts from its first joke.
+  $('ordersel').onchange=function(){setOrder($('ordersel').value,false); if(listMode) $('list').scrollTop=0};
   $('favonly').onclick=function(){favOnly=!favOnly;$('favonly').setAttribute('aria-pressed',favOnly);rebuild(false)};
   ['t-all','t-q','t-s'].forEach(function(id){$(id).onclick=function(){setType($(id).getAttribute('data-type'))}});
   $('search').oninput=function(){rebuild(false)};
@@ -392,7 +399,7 @@ async function boot(){
     if(j.ts==null&&j.date){var t=Date.parse(j.date+'T00:00:00Z');j.ts=isNaN(t)?0:t/1000}
     return j});
   var so=load(ORDK); if(so==='old'||so==='shuf'||so==='new'){sortMode=so}
-  $('order').setAttribute('data-order',sortMode); $('order').setAttribute('aria-label',ORDARIA[sortMode]); $('orderlbl').textContent=ORDLBL[sortMode];
+  $('order').setAttribute('data-order',sortMode); $('ordersel').setAttribute('aria-label',ORDARIA[sortMode]); $('orderlbl').textContent=ORDLBL[sortMode]; $('ordersel').value=sortMode;
   loadFavs(); wire(); typeCounts();
   $('app').hidden=false;
   var st=load(TYPEK); if(st==='q'||st==='s') setType(st); else rebuild(false);
