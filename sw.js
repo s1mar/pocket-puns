@@ -1,4 +1,4 @@
-var CACHE = 'pocket-puns-v1';
+var CACHE = 'pocket-puns-v2';
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -14,7 +14,18 @@ self.addEventListener('activate', function (e) {
 // Network first, cache fallback: a rebuilt jokes.enc and new shell arrive when online, everything works offline.
 self.addEventListener('fetch', function (e) {
   var req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  var u = new URL(req.url);
+  // Fonts (Google Fonts CSS and files): cache first, refreshed in the background, so type survives offline after one online visit.
+  if (req.method === 'GET' && (u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com')) {
+    e.respondWith(caches.open(CACHE).then(function (c) {
+      return c.match(req).then(function (m) {
+        var net = fetch(req).then(function (res) { if (res && (res.ok || res.type === 'opaque')) c.put(req, res.clone()); return res; });
+        return m || net.catch(function () { return Response.error(); });
+      });
+    }));
+    return;
+  }
+  if (req.method !== 'GET' || u.origin !== location.origin) return;
   e.respondWith(
     fetch(req).then(function (res) {
       if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
