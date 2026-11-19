@@ -63,6 +63,14 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
 .chip svg{width:18px;height:18px;flex:none}
 .chip:active{transform:skewX(-10deg) scale(.95)}
 .chip[aria-pressed=true]{background:var(--p5);box-shadow:3px 3px 0 #000;color:#fff}
+/* joke-type filter: a skewed segmented strip under the chips */
+.types{display:grid;grid-template-columns:repeat(3,1fr);margin:0 6px 12px;background:#000;transform:skewX(-10deg);box-shadow:3px 3px 0 var(--p5)}
+.types button{min-height:44px;font:14px/1 var(--punch);letter-spacing:.07em;text-transform:uppercase;color:#cbbfa8;background:transparent;border:0;border-radius:0;padding:0 4px}
+.types button+button{border-left:1px solid #2a2020}
+.types button>span{display:inline-block;transform:skewX(10deg)}
+.types button small{font:12px var(--typer,monospace);letter-spacing:0;color:#8a7d66;margin-left:5px;text-transform:none}
+.types button[aria-pressed=true]{background:var(--p5);color:#fff}
+.types button[aria-pressed=true] small{color:#ffd9d4}
 
 /* the lit panel: one joke as a title strip in a chrome frame */
 #card{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;margin:2px 7px 0;
@@ -150,6 +158,11 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
     <button id="shuffle" class="chip" aria-pressed="false" aria-label="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span>Shuffle</span></button>
     <button id="listmode" class="chip" aria-pressed="false" aria-label="List view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>List</span></button>
   </div>
+  <div class="types" role="group" aria-label="Joke type">
+    <button id="t-all" data-type="all" aria-pressed="true"><span>All<small></small></span></button>
+    <button id="t-q" data-type="q" aria-pressed="false" aria-label="Questions only"><span>Questions<small></small></span></button>
+    <button id="t-s" data-type="s" aria-pressed="false" aria-label="One-liners only"><span>One-liners<small></small></span></button>
+  </div>
   <div id="list" hidden></div>
   <div id="card">
     <div id="empty" hidden><b class="et"></b><span class="es"></span><button class="clearbtn" type="button"></button></div>
@@ -209,6 +222,18 @@ async function decrypt(keyStr,buf){
 }
 
 var jokes=[], view=[], order=[], pos=0, shuffled=false, favOnly=false, shown=false, favs={}, listMode=false, LISTK='pp.list';
+// Joke type: 'q' when the setup asks a question, 's' (one-liner) otherwise.
+var jtype='all', TYPEK='pp.type';
+function typeOf(j){return /\?/.test(j.setup)?'q':'s'}
+function setType(t){
+  jtype=t; store(TYPEK,t);
+  ['all','q','s'].forEach(function(x){$(x==='all'?'t-all':'t-'+x).setAttribute('aria-pressed',x===t?'true':'false')});
+  rebuild(false);
+}
+function typeCounts(){
+  var n={all:jokes.length,q:0,s:0}; jokes.forEach(function(j){n[j.type]++});
+  ['all','q','s'].forEach(function(x){$(x==='all'?'t-all':'t-'+x).querySelector('small').textContent=n[x]});
+}
 function hid(j){var s=j.setup+'\u0001'+j.punchline,h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
 function loadFavs(){try{favs=JSON.parse(load(FAVK)||'{}')||{}}catch(e){favs={}}}
 function saveFavs(){store(FAVK,JSON.stringify(favs))}
@@ -218,6 +243,7 @@ function rebuild(keepCurrent){
   var q=$('search').value.trim().toLowerCase();
   view=jokes.filter(function(j){
     if(favOnly&&!favs[j.id]) return false;
+    if(jtype!=='all'&&j.type!==jtype) return false;
     return !q||(j.setup+' '+j.punchline).toLowerCase().indexOf(q)>=0;
   });
   order=view.map(function(_,i){return i});
@@ -231,7 +257,7 @@ function emptyMsg(){
   return ['No jokes match','Try a different word.',($('search').value.trim()?'Clear search':'Show all jokes')];
 }
 function clearFilters(){
-  $('search').value=''; favOnly=false; $('favonly').setAttribute('aria-pressed','false'); rebuild(false);
+  $('search').value=''; favOnly=false; $('favonly').setAttribute('aria-pressed','false'); setType('all');
 }
 function shuf(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}}
 
@@ -304,6 +330,7 @@ function wire(){
   $('empty').querySelector('.clearbtn').onclick=clearFilters;
   $('shuffle').onclick=function(){shuffled=!shuffled;$('shuffle').setAttribute('aria-pressed',shuffled);rebuild(true)};
   $('favonly').onclick=function(){favOnly=!favOnly;$('favonly').setAttribute('aria-pressed',favOnly);rebuild(false)};
+  ['t-all','t-q','t-s'].forEach(function(id){$(id).onclick=function(){setType($(id).getAttribute('data-type'))}});
   $('search').oninput=function(){rebuild(false)};
   $('listmode').onclick=function(){setList(!listMode)};
   $('fav').onclick=function(){
@@ -336,9 +363,10 @@ async function boot(){
   try{ data=await decrypt(found.k,buf) }
   catch(e){ if(!found.fromHash) dropKey(); needLink(); return }
   saveKey(found.k); holdKey(found.k);
-  jokes=data.map(function(j){j.id=hid(j);return j});
-  loadFavs(); wire();
-  $('app').hidden=false; rebuild(false);
+  jokes=data.map(function(j){j.id=hid(j);j.type=typeOf(j);return j});
+  loadFavs(); wire(); typeCounts();
+  $('app').hidden=false;
+  var st=load(TYPEK); if(st==='q'||st==='s') setType(st); else rebuild(false);
   if(load(LISTK)==='1') setList(true);
 }
 window.addEventListener('hashchange',function(){ if(location.hash.indexOf('#k=')===0) location.reload() });
