@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pocket Puns</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Puns">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fff4d6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1710" media="(prefers-color-scheme: dark)">
+<style>
+:root{--bg:#fff4d6;--card:#ffffff;--ink:#2a2418;--mute:#7a6f58;--accent:#e8a200;--accent-ink:#2a2418;--line:#ecdfb8;--star:#e8a200}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1710;--card:#272116;--ink:#f6ecd2;--mute:#a89c80;--accent:#f2b51a;--accent-ink:#1b1710;--line:#3a3220;--star:#f2b51a}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  display:flex;flex-direction:column;overflow:hidden}
+[hidden]{display:none!important}
+#needlink{margin:auto;padding:24px;text-align:center;color:var(--mute);font-size:18px}
+#app{flex:1;display:flex;flex-direction:column;min-height:0;padding:12px 16px 0}
+header{display:flex;align-items:center;gap:10px}
+h1{font-size:20px;margin:0;flex:1}
+#counter{color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;margin:10px 0}
+#search{flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px 14px;min-height:44px}
+button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+#card{flex:1;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;
+  overflow:auto;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+#setup{font-size:22px;font-weight:600;margin:0 0 14px;white-space:pre-wrap}
+#punch{font-size:22px;margin:0;color:var(--accent);white-space:pre-wrap}
+@media (prefers-color-scheme:light){#punch{color:#9a6a00}}
+#reveal{margin-top:auto;align-self:stretch}
+#meta{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;font-size:14px;color:var(--mute)}
+.badge{border:1px solid var(--line);border-radius:8px;padding:1px 7px;font-size:12px;text-transform:uppercase}
+#meta a{color:var(--mute)}
+#fav{font-size:22px;line-height:1;padding:6px 12px;margin-left:auto;color:var(--mute)}
+#fav[aria-pressed=true]{background:transparent;color:var(--star);border-color:var(--line)}
+#nav{display:flex;gap:8px;margin:10px 0}
+#nav button{flex:1}
+#empty{margin:auto;color:var(--mute);text-align:center}
+footer{padding:8px 0 10px;text-align:center;font-size:12px;color:var(--mute)}
+footer a{color:var(--mute)}
+</style>
+</head>
+<body>
+<div id="needlink" hidden>This app needs its link</div>
+<div id="app" hidden>
+  <header><h1>Pocket Puns</h1><span id="counter" aria-live="polite"></span></header>
+  <div class="row">
+    <input id="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search jokes">
+    <button id="favonly" aria-pressed="false" aria-label="Favorites only">Faves</button>
+    <button id="shuffle" aria-pressed="false" aria-label="Shuffle">Shuffle</button>
+  </div>
+  <div id="card">
+    <div id="empty" hidden>No jokes match.</div>
+    <div id="body">
+      <p id="setup"></p>
+      <p id="punch" hidden></p>
+    </div>
+    <button id="reveal" class="primary">Tap for the punchline</button>
+    <div id="meta" hidden>
+      <span id="badges"></span>
+      <a id="orig" target="_blank" rel="noopener">Open original</a>
+      <button id="fav" aria-pressed="false" aria-label="Favorite">&#9734;</button>
+    </div>
+  </div>
+  <div id="nav">
+    <button id="prev" aria-label="Previous">&larr; Prev</button>
+    <button id="next" class="primary" aria-label="Next">Next &rarr;</button>
+  </div>
+  <footer>Jokes by Alina (<a href="https://www.instagram.com/alinasoninsta/" target="_blank" rel="noopener">@alinasoninsta</a>,
+    <a href="https://www.tiktok.com/@alinasontiktok" target="_blank" rel="noopener">@alinasontiktok</a>)</footer>
+</div>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var LSK='pp.k', FAVK='pp.fav', COOKIE='pp_k';
+
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function dropKey(){try{localStorage.removeItem(LSK)}catch(e){} try{document.cookie=COOKIE+'=;path='+dir()+';max-age=0'}catch(e){}}
+function dir(){return location.pathname.replace(/[^\/]*$/,'')}
+function cookieKey(){var m=document.cookie.match(/(?:^|;\s*)pp_k=([A-Za-z0-9_-]+)/);return m?m[1]:null}
+function saveKey(k){
+  store(LSK,k);
+  try{document.cookie=COOKIE+'='+k+';path='+dir()+';max-age=34560000;SameSite=Lax'+(location.protocol==='https:'?';Secure':'')}catch(e){}
+}
+// The key stays in the address so iOS "Add to Home Screen" captures it. Never stripped.
+function holdKey(k){
+  try{var want='#k='+k; if(location.hash!==want) history.replaceState(null,'',location.pathname+location.search+want)}catch(e){}
+}
+function b64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+
+function findKey(){
+  var m=location.hash.match(/^#k=([A-Za-z0-9_-]+)/);
+  if(m) return {k:m[1],fromHash:true};
+  var s=load(LSK)||cookieKey();
+  return s?{k:s,fromHash:false}:null;
+}
+function needLink(){$('app').hidden=true;$('needlink').hidden=false}
+
+async function decrypt(keyStr,buf){
+  var raw=b64u(keyStr); if(raw.length!==32) throw new Error('key');
+  var key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  var u=new Uint8Array(buf);
+  var plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},key,u.slice(12));
+  var stream=new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'));
+  var text=await new Response(stream).text();
+  return JSON.parse(text);
+}
+
+var jokes=[], view=[], order=[], pos=0, shuffled=false, favOnly=false, shown=false, favs={};
+function hid(j){var s=j.setup+'\u0001'+j.punchline,h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+function loadFavs(){try{favs=JSON.parse(load(FAVK)||'{}')||{}}catch(e){favs={}}}
+function saveFavs(){store(FAVK,JSON.stringify(favs))}
+
+function rebuild(keepCurrent){
+  var cur=keepCurrent&&view.length?view[order[pos]]:null;
+  var q=$('search').value.trim().toLowerCase();
+  view=jokes.filter(function(j){
+    if(favOnly&&!favs[j.id]) return false;
+    return !q||(j.setup+' '+j.punchline).toLowerCase().indexOf(q)>=0;
+  });
+  order=view.map(function(_,i){return i});
+  if(shuffled) shuf(order);
+  pos=0;
+  if(cur){var vi=view.indexOf(cur);if(vi>=0)pos=order.indexOf(vi)}
+  shown=false; render();
+}
+function shuf(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}}
+
+function render(){
+  var has=view.length>0;
+  $('empty').hidden=has; $('body').hidden=!has; $('reveal').hidden=!has||shown; $('meta').hidden=!has;
+  $('prev').disabled=$('next').disabled=!has;
+  if(!has){$('counter').textContent='0 of '+jokes.length;return}
+  var j=view[order[pos]];
+  $('setup').textContent=j.setup; $('punch').textContent=j.punchline; $('punch').hidden=!shown;
+  $('counter').textContent=(pos+1)+' of '+view.length+(view.length!==jokes.length?' (of '+jokes.length+')':'');
+  var b=$('badges'); b.textContent='';
+  var seen={};
+  j.occurrences.forEach(function(o){if(seen[o.source])return;seen[o.source]=1;var s=document.createElement('span');s.className='badge';s.textContent=o.source;b.appendChild(s);b.appendChild(document.createTextNode(' '))});
+  var first=j.occurrences.filter(function(o){return o.url})[0], a=$('orig');
+  a.hidden=!first; if(first) a.href=first.url;
+  var f=favs[j.id]; $('fav').setAttribute('aria-pressed',f?'true':'false'); $('fav').innerHTML=f?'&#9733;':'&#9734;';
+  $('card').scrollTop=0;
+}
+function go(d){ if(!view.length)return; pos=(pos+d+view.length)%view.length; shown=false; render() }
+function reveal(){ if(!view.length)return; shown=true; render() }
+
+function wire(){
+  $('next').onclick=function(){go(1)}; $('prev').onclick=function(){go(-1)};
+  $('reveal').onclick=reveal;
+  $('shuffle').onclick=function(){shuffled=!shuffled;$('shuffle').setAttribute('aria-pressed',shuffled);rebuild(true)};
+  $('favonly').onclick=function(){favOnly=!favOnly;$('favonly').setAttribute('aria-pressed',favOnly);rebuild(false)};
+  $('search').oninput=function(){rebuild(false)};
+  $('fav').onclick=function(){
+    if(!view.length)return; var j=view[order[pos]];
+    if(favs[j.id]) delete favs[j.id]; else favs[j.id]=1;
+    saveFavs();
+    if(favOnly&&!favs[j.id]) rebuild(false); else render();
+  };
+  var x0=null,y0=null,card=$('card');
+  card.addEventListener('touchstart',function(e){var t=e.changedTouches[0];x0=t.clientX;y0=t.clientY},{passive:true});
+  card.addEventListener('touchend',function(e){
+    if(x0==null)return; var t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0; x0=null;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener('keydown',function(e){
+    if(e.target&&e.target.id==='search')return;
+    if(e.key==='ArrowRight')go(1); else if(e.key==='ArrowLeft')go(-1); else if(e.key===' '||e.key==='Enter'){if(!shown&&e.target.tagName!=='BUTTON'){e.preventDefault();reveal()}}
+  });
+}
+
+async function boot(){
+  var found=findKey();
+  if(!found){needLink();return}
+  var buf;
+  try{
+    var r=await fetch('jokes.enc',{cache:'no-cache'}); if(!r.ok) throw new Error('http');
+    buf=await r.arrayBuffer();
+  }catch(e){needLink();return}
+  var data;
+  try{ data=await decrypt(found.k,buf) }
+  catch(e){ if(!found.fromHash) dropKey(); needLink(); return }
+  saveKey(found.k); holdKey(found.k);
+  jokes=data.map(function(j){j.id=hid(j);return j});
+  loadFavs(); wire();
+  $('app').hidden=false; rebuild(false);
+}
+window.addEventListener('hashchange',function(){ if(location.hash.indexOf('#k=')===0) location.reload() });
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}) }
+boot();
+})();
+</script>
+</body>
+</html>
