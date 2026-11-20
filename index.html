@@ -72,6 +72,44 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
 .types button[aria-pressed=true]{background:var(--p5);color:#fff}
 .types button[aria-pressed=true] small{color:#ffd9d4}
 
+/* creator row: author picker (native select under the chip) + add-creator button */
+.crow{display:flex;gap:12px;margin:0 6px 12px}
+.crow .chip{min-width:0;padding:0 14px}
+#author{position:relative;flex:1 1 auto}
+#author svg.caret{width:12px;height:12px;margin-left:-3px;opacity:.85}
+#authlbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+#author[data-on="1"]{background:var(--p5);box-shadow:3px 3px 0 #000}
+#authsel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0;-webkit-appearance:none;appearance:none;transform:none}
+#addbtn{flex:none;font-size:15px}
+.crow.solo #addbtn{flex:1}
+/* byline row inside the card meta: creator name and the unchecked tag */
+#facts{display:contents}
+#meta.by{display:grid;grid-template-columns:1fr auto;gap:6px 10px}
+#meta.by #byline{grid-column:1;grid-row:1;min-width:0}
+#meta.by #fav{grid-column:2;grid-row:1}
+#meta.by #facts{grid-column:1/-1;grid-row:2;display:flex;align-items:center;gap:7px 10px;flex-wrap:wrap}
+#byline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge.by{color:var(--cream)}
+.unck{font:12px/1 var(--typer,monospace);color:#7a6548;border:1px dashed #9c8a66;padding:3px 6px;border-radius:3px;white-space:nowrap}
+.item .d .unck{margin-left:6px}
+
+/* add-creator sheet */
+#sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-start;justify-content:center;overflow:auto;
+  padding:calc(env(safe-area-inset-top) + 9vh) 16px 16px;background:rgba(10,4,5,.8)}
+#sheetp{position:relative;width:100%;max-width:420px;padding:28px 18px 18px;color:var(--ink);background:var(--strip),var(--paper);border-radius:16px;
+  box-shadow:var(--chrome),0 14px 30px rgba(0,0,0,.65)}
+#sheetp h2{font:400 30px/1.1 var(--script);color:var(--p5);margin:0 52px 12px 0}
+#sx{position:absolute;top:12px;right:10px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--cream);background:#000;box-shadow:0 0 0 2px #6b6b6b}
+#handle{display:block;width:100%;min-width:0;height:48px;padding:0 14px;font:17px/1.2 var(--type);color:#111;background:#f6ecd6;border:2px solid #444;border-radius:10px;-webkit-appearance:none;appearance:none}
+#handle:focus{outline:none;border-color:var(--mint);box-shadow:0 0 0 3px rgba(127,209,196,.35)}
+#handle::placeholder{color:#6b5a48}
+#hmsg{min-height:20px;margin:6px 2px 0;font:14px/1.4 var(--type);color:#5c4a33}
+#hmsg.bad{color:#b3121a}
+#hmsg.exists{color:#5c4a33;font-weight:bold}
+#hnote{margin:4px 2px 14px;font:14px/1.45 var(--type);color:#5c4a33}
+#gobtn{display:block;width:100%;min-height:58px;font:22px/1 var(--punch);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--p5);
+  clip-path:polygon(2% 0,100% 6%,97% 100%,0 94%)}
+
 /* the lit panel: one joke as a title strip in a chrome frame */
 #card{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;margin:2px 7px 0;
   padding:26px 18px 14px;color:var(--ink);background:var(--strip),var(--paper);border-radius:16px;
@@ -149,7 +187,8 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
   .item .s{font-size:19px} .item .p{font-size:21px}
 }
 @media (max-height:700px){
-  h1{font-size:26px} header{min-height:40px} .row{margin:6px 0 8px} .chips{margin-bottom:8px}
+  h1{font-size:26px} header{min-height:40px} .row{margin:6px 0 8px} .chips{margin-bottom:8px} .crow{margin-bottom:8px} .crow .chip{min-height:44px} #search{height:44px} #sheet{padding-top:calc(env(safe-area-inset-top) + 4vh)}
+  #meta{padding-top:8px} #reveal{min-height:56px}
   #card{padding:22px 16px 12px} #setup{font-size:22px} #punch{font-size:25px;margin-top:26px}
   #nav{padding-top:12px} #nav button{min-height:54px}
 }
@@ -170,6 +209,10 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
     <label id="order" class="chip" data-order="new"><svg class="o-new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 14l6 6 6-6"/></svg><svg class="o-old" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V4M6 10l6-6 6 6"/></svg><svg class="o-shuf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 6 10 11 10H21M3 17h3.5c1.8 0 3-1 4-2.4M13.5 9.4c1-1.4 2.2-2.4 4-2.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span id="orderlbl">Newest</span><svg class="caret" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12l-6 7z"/></svg><select id="ordersel" aria-label="Sort order"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="shuf">Shuffle</option></select></label>
     <button id="listmode" class="chip" aria-pressed="false" aria-label="List view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>List</span></button>
   </div>
+  <div class="crow solo" id="crow">
+    <label id="author" class="chip" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.6-4 3.8-6 7.5-6s6.9 2 7.5 6"/></svg><span id="authlbl">All creators</span><svg class="caret" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 9h12l-6 7z"/></svg><select id="authsel" aria-label="Creator"></select></label>
+    <button id="addbtn" class="chip" type="button" aria-label="Add creator" aria-haspopup="dialog"><span id="addlbl">+ Add creator</span></button>
+  </div>
   <div class="types" role="group" aria-label="Joke type">
     <button id="t-all" data-type="all" aria-pressed="true"><span>All<small></small></span></button>
     <button id="t-q" data-type="q" aria-pressed="false" aria-label="Questions only"><span>Questions<small></small></span></button>
@@ -184,15 +227,26 @@ h1{font:400 30px/1.1 var(--script);margin:0;flex:1;color:#fff4e0;white-space:now
     </div>
     <button id="reveal" class="primary">Tap for the punchline</button>
     <div id="meta" hidden>
-      <span id="badges"></span>
+      <div id="byline" hidden></div>
+      <div id="facts"><span id="badges"></span>
       <span id="date"></span>
-      <a id="orig" target="_blank" rel="noopener">Open original</a>
+      <a id="orig" target="_blank" rel="noopener">Open original</a></div>
       <button id="fav" aria-pressed="false" aria-label="Favorite">&#9734;</button>
     </div>
   </div>
   <div id="nav">
     <button id="prev" aria-label="Previous">&larr; Prev</button>
     <button id="next" class="primary" aria-label="Next">Next &rarr;</button>
+  </div>
+</div>
+<div id="sheet" hidden>
+  <div id="sheetp" role="dialog" aria-modal="true" aria-labelledby="sheett">
+    <button id="sx" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+    <h2 id="sheett">Add a creator</h2>
+    <input id="handle" type="text" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="@instagram_handle" aria-label="Instagram handle" aria-describedby="hmsg hnote">
+    <div id="hmsg" aria-live="polite"></div>
+    <p id="hnote">Requests go to your private GitHub repo. After you tap Submit there, your laptop picks it up within about 15 minutes, while it is on. New jokes show up here after that.</p>
+    <button id="gobtn" type="button" disabled>Open request</button>
   </div>
 </div>
 <script>
@@ -248,6 +302,8 @@ function fmtDate(s){var p=s.split('-');return p.length===3?MON[+p[1]-1]+' '+(+p[
 var jokes=[], view=[], order=[], pos=0, favOnly=false, shown=false, favs={}, listMode=false, LISTK='pp.list';
 // Joke type: 'q' when the setup asks a question, 's' (one-liner) otherwise.
 var jtype='all', TYPEK='pp.type';
+// Creator: handle ('' = jokes with no author), '*' = everyone. Picker only exists with 2+ creators.
+var jauthor='*', AUTHK='pp.author', authors=[], multi=false;
 function typeOf(j){return /\?/.test(j.setup)?'q':'s'}
 function setType(t){
   jtype=t; store(TYPEK,t);
@@ -255,7 +311,7 @@ function setType(t){
   rebuild(false);
 }
 function typeCounts(){
-  var n={all:jokes.length,q:0,s:0}; jokes.forEach(function(j){n[j.type]++});
+  var n={all:0,q:0,s:0}; jokes.forEach(function(j){if(jauthor!=='*'&&j.au!==jauthor)return; n.all++;n[j.type]++});
   ['all','q','s'].forEach(function(x){$(x==='all'?'t-all':'t-'+x).querySelector('small').textContent=n[x]});
 }
 function hid(j){var s=j.rid||(j.setup+'\u0001'+j.punchline),h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
@@ -268,6 +324,7 @@ function rebuild(keepCurrent){
   view=jokes.filter(function(j){
     if(favOnly&&!favs[j.id]) return false;
     if(jtype!=='all'&&j.type!==jtype) return false;
+    if(jauthor!=='*'&&j.au!==jauthor) return false;
     return !q||(j.setup+' '+j.punchline).toLowerCase().indexOf(q)>=0;
   });
   // Newest/oldest by first-posted time; ties keep the original order.
@@ -281,12 +338,75 @@ function rebuild(keepCurrent){
   if(cur){var vi=view.indexOf(cur);if(vi>=0)pos=order.indexOf(vi)}
   shown=false; render();
 }
+function applyAuthor(a){
+  jauthor=a; var cur=null;
+  authors.forEach(function(x){if(x.au===a)cur=x});
+  $('authlbl').textContent=cur?cur.name:'All creators';
+  $('author').setAttribute('data-on',cur?'1':'0'); $('authsel').value=a;
+  $('authsel').setAttribute('aria-label','Creator: '+(cur?cur.name:'all creators'));
+  typeCounts();
+}
+function setAuthor(a){store(AUTHK,a); applyAuthor(a); rebuild(false); if(listMode) $('list').scrollTop=0}
+function initAuthors(){
+  var m={}; authors=[];
+  jokes.forEach(function(j){var x=m[j.au]; if(!x){x=m[j.au]={au:j.au,name:j.aname||j.author||'Other',n:0};authors.push(x)} x.n++});
+  authors.sort(function(a,b){return b.n-a.n||(a.name<b.name?-1:1)});
+  multi=authors.length>1;
+  var sel=$('authsel'); sel.textContent='';
+  if(multi){
+    var o=document.createElement('option'); o.value='*'; o.textContent='All creators ('+jokes.length+')'; sel.appendChild(o);
+    authors.forEach(function(x){var op=document.createElement('option'); op.value=x.au; op.textContent=x.name+' ('+x.n+')'; sel.appendChild(op)});
+  }
+  $('author').hidden=!multi; $('crow').className='crow'+(multi?'':' solo');
+  $('addlbl').textContent=multi?'+ Creator':'+ Add creator';
+  var want=multi?load(AUTHK):null, ok=false;
+  authors.forEach(function(x){if(x.au===want)ok=true});
+  if(multi) applyAuthor(ok?want:'*'); else {jauthor='*'; typeCounts()}
+}
+function authName(j){return j.aname||j.author||'Other'}
+function uncheckedTag(){
+  var u=document.createElement('span'); u.className='unck'; u.textContent='unchecked';
+  u.title='Not yet reviewed, may be garbled'; u.setAttribute('aria-label','Not yet reviewed, may be garbled'); return u;
+}
+function byline(j,el){
+  el.textContent=''; var any=false;
+  if(multi){var b=document.createElement('span'); b.className='badge by'; b.textContent=authName(j); el.appendChild(b); any=true}
+  if(j.audited===false){el.appendChild(uncheckedTag()); any=true}
+  el.hidden=!any; $('meta').classList.toggle('by',any);
+}
+// Add-creator sheet
+var HANDLE_RE=/^[a-z0-9._]{1,30}$/, sheetOpener=null;
+function cleanHandle(v){return v.trim().replace(/^@/,'').toLowerCase()}
+function checkHandle(){
+  var v=cleanHandle($('handle').value), st;
+  if(!v) st=['','',false];
+  else if(!HANDLE_RE.test(v)) st=['Letters, numbers, dots and underscores only, up to 30.','bad',false];
+  else if(authors.some(function(x){return x.au===v})) st=['Already in your app','exists',false];
+  else st=['','',true];
+  $('hmsg').textContent=st[0]; $('hmsg').className=st[1]; $('gobtn').disabled=!st[2];
+  $('handle').setAttribute('aria-invalid',st[1]==='bad'?'true':'false');
+  return st[2]?v:null;
+}
+function openSheet(){
+  sheetOpener=$('addbtn'); $('handle').value=''; checkHandle();
+  $('sheet').hidden=false; $('app').inert=true; $('handle').focus();
+}
+function closeSheet(){
+  $('sheet').hidden=true; $('app').inert=false;
+  if(sheetOpener&&sheetOpener.focus) sheetOpener.focus(); sheetOpener=null;
+}
+function submitHandle(){
+  var v=checkHandle(); if(!v) return;
+  var url='https://github.com/s1mar/pocket-puns-requests/issues/new?title='+encodeURIComponent('add '+v)+'&labels=queued';
+  try{window.open(url,'_blank','noopener')}catch(e){}
+  closeSheet();
+}
 function emptyMsg(){
   if(favOnly&&!$('search').value.trim()) return ['No favourites yet','Tap the star on a joke to keep it here.','Show all jokes'];
   return ['No jokes match','Try a different word.',($('search').value.trim()?'Clear search':'Show all jokes')];
 }
 function clearFilters(){
-  $('search').value=''; favOnly=false; $('favonly').setAttribute('aria-pressed','false'); setType('all');
+  $('search').value=''; favOnly=false; $('favonly').setAttribute('aria-pressed','false'); if(multi) applyAuthor('*'); setType('all');
 }
 function shuf(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}}
 
@@ -307,7 +427,10 @@ function renderList(){
     var s=document.createElement('p'); s.className='s'; s.textContent=j.setup;
     var q=document.createElement('p'); q.className='p'; q.textContent=j.punchline;
     t.appendChild(s); t.appendChild(q);
-    if(j.date){var dd=document.createElement('span'); dd.className='d'; dd.textContent=fmtDate(j.date); t.appendChild(dd)}
+    var dl=[j.date?fmtDate(j.date):'', multi?authName(j):''].filter(Boolean).join(' · ');
+    if(dl||j.audited===false){var dd=document.createElement('span'); dd.className='d'; dd.textContent=dl;
+      if(j.audited===false) dd.appendChild(uncheckedTag());
+      t.appendChild(dd)}
     var st=document.createElement('button'); st.className='star'; st.setAttribute('aria-label','Favorite');
     st.setAttribute('aria-pressed',favs[j.id]?'true':'false'); st.innerHTML=favs[j.id]?'&#9733;':'&#9734;';
     st.onclick=function(ev){ev.stopPropagation();
@@ -341,6 +464,7 @@ function render(){
   $('setup').textContent=j.setup; $('punch').textContent=j.punchline; $('punch').hidden=!shown;
   $('counter').textContent=(pos+1)+' of '+view.length+(view.length!==jokes.length?' (of '+jokes.length+')':'');
   $('date').textContent=j.date?fmtDate(j.date):'';
+  byline(j,$('byline'));
   var b=$('badges'); b.textContent='';
   var seen={};
   j.occurrences.forEach(function(o){if(seen[o.source])return;seen[o.source]=1;var s=document.createElement('span');s.className='badge';s.textContent=o.source;b.appendChild(s);b.appendChild(document.createTextNode(' '))});
@@ -364,6 +488,18 @@ function wire(){
   $('favonly').onclick=function(){favOnly=!favOnly;$('favonly').setAttribute('aria-pressed',favOnly);rebuild(false)};
   ['t-all','t-q','t-s'].forEach(function(id){$(id).onclick=function(){setType($(id).getAttribute('data-type'))}});
   $('search').oninput=function(){rebuild(false)};
+  $('authsel').onchange=function(){setAuthor($('authsel').value)};
+  $('addbtn').onclick=openSheet; $('sx').onclick=closeSheet;
+  $('sheet').addEventListener('click',function(e){if(e.target===$('sheet'))closeSheet()});
+  $('handle').oninput=checkHandle; $('gobtn').onclick=submitHandle;
+  $('handle').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();submitHandle()}});
+  $('sheet').addEventListener('keydown',function(e){
+    if(e.key==='Escape'){e.stopPropagation();closeSheet();return}
+    if(e.key==='Tab'){
+      var f=[$('handle'),$('gobtn'),$('sx')].filter(function(x){return !x.disabled}), i=f.indexOf(document.activeElement);
+      e.preventDefault(); f[(i+(e.shiftKey?-1:1)+f.length)%f.length].focus();
+    }
+  });
   $('listmode').onclick=function(){setList(!listMode)};
   $('fav').onclick=function(){
     if(!view.length)return; var j=view[order[pos]];
@@ -378,6 +514,7 @@ function wire(){
     if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
   },{passive:true});
   document.addEventListener('keydown',function(e){
+    if(!$('sheet').hidden){if(e.key==='Escape')closeSheet();return}
     if(e.target&&e.target.id==='search')return;
     if(e.key==='ArrowRight')go(1); else if(e.key==='ArrowLeft')go(-1); else if(e.key===' '||e.key==='Enter'){if(!shown&&e.target.tagName!=='BUTTON'){e.preventDefault();reveal()}}
   });
@@ -395,12 +532,12 @@ async function boot(){
   try{ data=await decrypt(found.k,buf) }
   catch(e){ if(!found.fromHash) dropKey(); needLink(); return }
   saveKey(found.k); holdKey(found.k);
-  jokes=data.map(function(j,i){j.id=hid(j);j.type=typeOf(j);j.idx=i;
+  jokes=data.map(function(j,i){j.id=hid(j);j.au=String(j.author||'').toLowerCase();j.type=typeOf(j);j.idx=i;
     if(j.ts==null&&j.date){var t=Date.parse(j.date+'T00:00:00Z');j.ts=isNaN(t)?0:t/1000}
     return j});
   var so=load(ORDK); if(so==='old'||so==='shuf'||so==='new'){sortMode=so}
   $('order').setAttribute('data-order',sortMode); $('ordersel').setAttribute('aria-label',ORDARIA[sortMode]); $('orderlbl').textContent=ORDLBL[sortMode]; $('ordersel').value=sortMode;
-  loadFavs(); wire(); typeCounts();
+  loadFavs(); wire(); initAuthors();
   $('app').hidden=false;
   var st=load(TYPEK); if(st==='q'||st==='s') setType(st); else rebuild(false);
   if(load(LISTK)==='1') setList(true);
