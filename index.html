@@ -258,7 +258,7 @@ function typeCounts(){
   var n={all:jokes.length,q:0,s:0}; jokes.forEach(function(j){n[j.type]++});
   ['all','q','s'].forEach(function(x){$(x==='all'?'t-all':'t-'+x).querySelector('small').textContent=n[x]});
 }
-function hid(j){var s=j.setup+'\u0001'+j.punchline,h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+function hid(j){var s=j.rid||(j.setup+'\u0001'+j.punchline),h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
 function loadFavs(){try{favs=JSON.parse(load(FAVK)||'{}')||{}}catch(e){favs={}}}
 function saveFavs(){store(FAVK,JSON.stringify(favs))}
 
